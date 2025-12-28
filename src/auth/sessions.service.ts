@@ -78,7 +78,7 @@ export class SessionsService {
     const payload: JwtPayload = { sub: userId, email, sid: sessionId };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '1m',
+      expiresIn: '1d',
     });
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '7d',
