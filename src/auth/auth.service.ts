@@ -1,28 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import type { SafeUser } from '@/shared/model/db';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UsersService } from '@/users/users.service';
 
-import type { JwtPayload } from './interfaces/jwt-payload.interface';
+import type { SessionTokens } from './interfaces/jwt-payload.interface';
+import { SessionsService } from './sessions.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
+    private readonly sessionsService: SessionsService,
   ) {}
 
-  private generateTokens({ email, id }: SafeUser) {
-    const payload: JwtPayload = { email, sub: id };
-
-    return { access_token: this.jwtService.sign(payload) };
-  }
-
-  public login(user: SafeUser) {
-    return this.generateTokens(user);
+  public login(user: SafeUser): Promise<SessionTokens> {
+    return this.sessionsService.create(user.id, user.email);
   }
 
   async signup(createUserDto: CreateUserDto) {
@@ -40,6 +34,6 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return this.generateTokens(user);
+    return this.sessionsService.create(user.id, user.email);
   }
 }
