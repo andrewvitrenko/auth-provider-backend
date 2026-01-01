@@ -17,20 +17,22 @@ export class SessionsService {
   ) {}
 
   public async create(userId: string, email: string): Promise<SessionTokens> {
-    const session = await this.prismaService.userSession.create({
-      data: { userId, expiresAt: addDays(new Date(), 7) },
+    return this.prismaService.$transaction(async (tx) => {
+      const session = await tx.userSession.create({
+        data: { userId, expiresAt: addDays(new Date(), 7) },
+      });
+
+      const tokens = this.generateTokens(session.id, userId, email);
+
+      await tx.userSession.update({
+        where: { id: session.id },
+        data: {
+          refreshToken: tokens.refresh_token,
+        },
+      });
+
+      return tokens;
     });
-
-    const tokens = this.generateTokens(session.id, userId, email);
-
-    await this.prismaService.userSession.update({
-      where: { id: session.id },
-      data: {
-        refreshToken: tokens.refresh_token,
-      },
-    });
-
-    return tokens;
   }
 
   public async refresh(sessionId: string): Promise<SessionTokens> {
@@ -40,7 +42,7 @@ export class SessionsService {
     });
 
     if (!session) {
-      throw new BadRequestException('Invalid refresh token');
+      throw new BadRequestException('Session not found');
     }
 
     const tokens = this.generateTokens(
@@ -51,7 +53,10 @@ export class SessionsService {
 
     await this.prismaService.userSession.update({
       where: { id: session.id },
-      data: { refreshToken: tokens.refresh_token },
+      data: {
+        refreshToken: tokens.refresh_token,
+        expiresAt: addDays(new Date(), 7),
+      },
     });
 
     return tokens;
@@ -91,10 +96,12 @@ export class SessionsService {
     };
   }
 
-  public async logout(sessionId: string): Promise<void> {
+  public async logout(sessionId: string) {
     await this.prismaService.userSession.delete({
       where: { id: sessionId },
     });
+
+    return { success: true };
   }
 
   public getSessionsByUserId(userId: string, excludeSessionId?: string) {

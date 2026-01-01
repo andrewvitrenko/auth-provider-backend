@@ -30,10 +30,7 @@ export class UsersService {
   }
 
   public update(id: string, updateUserDto: UpdateUserDto): Promise<SafeUser> {
-    if (
-      !updateUserDto ||
-      (!updateUserDto.firstName && !updateUserDto.lastName)
-    ) {
+    if (!updateUserDto || Object.keys(updateUserDto).length === 0) {
       throw new BadRequestException('Cannot update user with empty data');
     }
 

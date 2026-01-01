@@ -6,6 +6,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
+import { differenceInSeconds } from 'date-fns';
 import { Request } from 'express';
 
 import { SessionsService } from '../sessions.service';
@@ -17,8 +18,12 @@ class SessionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context
       .switchToHttp()
-      .getRequest<Request<{ sessionId: string }>>();
+      .getRequest<Request<{ sessionId?: string }>>();
     const { sessionId } = request.params;
+
+    if (!sessionId) {
+      throw new BadRequestException('User session is required');
+    }
 
     if (!isUUID(sessionId)) {
       throw new BadRequestException('Invalid session ID');
@@ -26,7 +31,15 @@ class SessionGuard implements CanActivate {
 
     const session = await this.sessionsService.getSessionById(sessionId);
 
-    return session?.userId === request.user?.['id'];
+    if (!session) {
+      throw new BadRequestException('Session not found');
+    }
+
+    if (differenceInSeconds(session.expiresAt, new Date()) <= 0) {
+      throw new BadRequestException('Session has expired');
+    }
+
+    return session.userId === request.user?.['id'];
   }
 }
 

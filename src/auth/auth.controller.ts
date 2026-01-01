@@ -5,7 +5,6 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Request,
 } from '@nestjs/common';
 
 import { UseUserData } from '@/shared/decorators/use-user-data';
