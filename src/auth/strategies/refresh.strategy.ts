@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import * as bcrypt from 'bcrypt';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
@@ -30,13 +31,22 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
 
     if (!token) {
-      throw new UnauthorizedException('No token found');
+      throw new UnauthorizedException('No token provided');
     }
 
-    const session = await this.sessionsService.getSessionByRefreshToken(token);
+    const session = await this.sessionsService.getSessionById(payload.sid);
 
     if (!session || session.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired session');
+    }
+
+    const isValidToken = await bcrypt.compare(
+      token,
+      session.refreshTokenHash ?? '',
+    );
+
+    if (!isValidToken) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     const user = await this.usersService.getById(payload.sub);

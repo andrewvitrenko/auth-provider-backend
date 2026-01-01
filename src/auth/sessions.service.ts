@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import { addDays } from 'date-fns';
 
 import { PrismaService } from '@/prisma/prisma.service';
@@ -27,7 +28,7 @@ export class SessionsService {
       await tx.userSession.update({
         where: { id: session.id },
         data: {
-          refreshToken: tokens.refresh_token,
+          refreshTokenHash: await bcrypt.hash(tokens.refresh_token, 10),
         },
       });
 
@@ -54,19 +55,12 @@ export class SessionsService {
     await this.prismaService.userSession.update({
       where: { id: session.id },
       data: {
-        refreshToken: tokens.refresh_token,
+        refreshTokenHash: await bcrypt.hash(tokens.refresh_token, 10),
         expiresAt: addDays(new Date(), 7),
       },
     });
 
     return tokens;
-  }
-
-  public async getSessionByRefreshToken(refreshToken: string) {
-    return this.prismaService.userSession.findUnique({
-      where: { refreshToken },
-      include: { user: true },
-    });
   }
 
   public async getSessionById(sessionId: string) {
