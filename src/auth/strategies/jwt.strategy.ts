@@ -7,9 +7,10 @@ import { IEnv } from '@/shared/model/env';
 import { UsersService } from '@/users/users.service';
 
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { SessionUser } from '../interfaces/session.interface';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly usersService: UsersService,
     configService: ConfigService<IEnv, true>,
@@ -21,11 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<SessionUser> {
     const user = await this.usersService.getById(payload.sub);
 
     if (!user) throw new UnauthorizedException();
 
-    return user;
+    return { ...user, sessionId: payload.sid };
   }
 }
