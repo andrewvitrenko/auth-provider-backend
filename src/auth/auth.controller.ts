@@ -48,8 +48,8 @@ export class AuthController {
     return this.sessionsService.logout(sessionId);
   }
 
-  @UseJwtGuard()
   @UseSessionGuard()
+  @UseJwtGuard()
   @Post('sessions/:sessionId/revoke')
   revokeSession(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
     return this.sessionsService.logout(sessionId);
