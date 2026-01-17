@@ -1,11 +1,9 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -14,7 +12,12 @@ import {
 
 import { UseJwtGuard } from '@/auth/guards/jwt-auth.guard';
 import { UseUserData } from '@/shared/decorators/use-user-data';
+import { ZodValidationPipe } from '@/shared/pipes/zod-validation.pipe';
 
+import {
+  type TodosGetListParams,
+  todosGetListSchema,
+} from './config/validation';
 import { CompleteTodoDto } from './dto/complete-todo.dto';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
@@ -29,11 +32,15 @@ export class TodosController {
   @Get('/')
   get(
     @UseUserData('id') userId: string,
-    @Query('search', new DefaultValuePipe('')) search: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query(new ZodValidationPipe(todosGetListSchema))
+    params: TodosGetListParams,
   ) {
-    return this.todosService.getList(userId, search, page, limit);
+    return this.todosService.getList(
+      userId,
+      params.search,
+      params.page,
+      params.limit,
+    );
   }
 
   @Post('/create')

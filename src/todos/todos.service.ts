@@ -32,7 +32,7 @@ export class TodosService {
     };
 
     const todos = await this.prismaService.todo.findMany(dbQuery);
-    const total = await this.prismaService.todo.count(dbQuery);
+    const total = await this.prismaService.todo.count({ where: dbQuery.where });
 
     return { data: todos, total };
   }

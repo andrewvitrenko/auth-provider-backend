@@ -2,7 +2,9 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UseGuards,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
@@ -25,10 +27,14 @@ class TodosGuard implements CanActivate {
     const todo = await this.todosService.getById(todoId);
 
     if (!todo) {
-      throw new BadRequestException('Todo not found');
+      throw new NotFoundException('Todo not found');
     }
 
-    return todo.userId === request.user?.['id'];
+    if (todo.userId !== request.user?.['id']) {
+      throw new ForbiddenException();
+    }
+
+    return true;
   }
 }
 
