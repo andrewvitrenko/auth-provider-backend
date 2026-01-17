@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -11,7 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   handleRequest(err, user, info, ctx, status) {
     if (info instanceof TokenExpiredError) {
-      throw new ForbiddenException('Token is expired');
+      throw new UnauthorizedException('Token is expired');
     }
 
     if (info instanceof JsonWebTokenError) {

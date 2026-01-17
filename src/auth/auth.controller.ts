@@ -42,7 +42,7 @@ export class AuthController {
     return this.sessionsService.refresh(sessionId);
   }
 
-  @UseRefreshGuard()
+  @UseJwtGuard()
   @Post('logout')
   logout(@UseUserData('sessionId') sessionId: string) {
     return this.sessionsService.logout(sessionId);

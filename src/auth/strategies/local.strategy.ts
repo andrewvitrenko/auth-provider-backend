@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 import { Strategy } from 'passport-local';
@@ -19,12 +19,11 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     const user = await this.usersService.getDbUser(email);
 
     if (!user)
-      throw new UnauthorizedException('User with this email does not exist');
+      throw new ForbiddenException('User with this email does not exist');
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid)
-      throw new UnauthorizedException('Invalid credentials');
+    if (!isPasswordValid) throw new ForbiddenException('Invalid credentials');
 
     return omit(user, ['password']);
   }
